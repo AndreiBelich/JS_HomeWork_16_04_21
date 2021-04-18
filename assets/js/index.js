@@ -4,7 +4,6 @@
  (Анаграммы - слова, которые имеют одинаковую длину и состоят из одних и тех же букв, но в разном порядке. Пример: "воз", "зов")
 Регистр букв не имеет значения. */
   
-/*Первый вариант решения */
 const isAnagram = (word1, word2) => [...word1.toLowerCase()].sort().join() === [...word2.toLowerCase()].sort().join();
 
 const testAnagram = {
@@ -60,13 +59,21 @@ testLettersCounter(engSentences, ENGLISH_VOWEL);
 /*4 Написать функцию, которая принимает массив и возвращает новый массив,
  состоящий только из уникальных значений первого массива (значения не должны повторяться).*/
 
+ /**
+  * Функция возвращает массив уникальных значений. Допустимые типы данных: number, string, array[string | number], object
+  * В массивах и объектах не предусмотрена вложенность других структур
+  * @param {array} data 
+  * @returns array
+  */
  const uniqueValues = (data) => {
    const NUMBER_SUFFIX = "__N";
    const STRING_SUFFIX = "__S";
+   const OBJECT_SUFFIX = "__O";
    const NUMBERS_ARRAY_SUFFIX = "_NA";
    const STRINGS_ARRAY_SUFFIX = "_SA";
    const MIX_ARRAY_SUFFIX = "_MA";
-   const ARRAY_SEPARATOR = "|";
+   const SEPARATOR = "|";
+   const OBJECT_SEPARATOR = ":";
    const obj = {};
    for(const item of data){
      let key = null;
@@ -82,23 +89,35 @@ testLettersCounter(engSentences, ENGLISH_VOWEL);
               1. Массив чисел
               2. Массив строк
               3. Смешанный массив состоящий из строк и чисел
+              4. Так же рассмотрен объект, объекты типа {a: 1, b : 2} и {b : 2, a : 1} считаются одинаковыми
         */
          if(Array.isArray(item)){
            if(item.every((val) => typeof(val) === "number")){
-             key = item.join(ARRAY_SEPARATOR) + NUMBERS_ARRAY_SUFFIX;
+             key = item.join(SEPARATOR) + NUMBERS_ARRAY_SUFFIX;
            }else if(item.some((val) => typeof(val) === "number")){
              key = "";
              for(const value of item){
                if(typeof(value) === "number"){
-                 key += value + NUMBER_SUFFIX + ARRAY_SEPARATOR;
+                 key += value + NUMBER_SUFFIX + " ";
                }else if(typeof(value) === "string"){
-                 key += value + STRING_SUFFIX + ARRAY_SEPARATOR;
+                 key += value + STRING_SUFFIX + " ";
                }
              }
-             key = key.slice(0, key.length - 1) + MIX_ARRAY_SUFFIX;
+             key = key.trim()
+                      .split(" ")
+                      .join(SEPARATOR) + MIX_ARRAY_SUFFIX;
            }else{
-             key = item.join(ARRAY_SEPARATOR) + STRINGS_ARRAY_SUFFIX;
+             key = item.join(SEPARATOR) + STRINGS_ARRAY_SUFFIX;
            }
+         }else{
+           key = "";
+           const objectKeys = Object.keys(item).sort();
+           for(const itemKey of objectKeys){
+             key += `${itemKey}:${item[itemKey]} `;
+           }
+           key = key.trim()
+                    .split(" ")
+                    .join(SEPARATOR) + OBJECT_SUFFIX;
          }
          break;
       default:
@@ -109,7 +128,6 @@ testLettersCounter(engSentences, ENGLISH_VOWEL);
    const result = [];
    for(const key in obj){
      if(obj[key] === 1){
-      console.log(key);
       let value = null;
       switch(key.slice(key.length - NUMBER_SUFFIX.length)){
         case NUMBER_SUFFIX:
@@ -120,17 +138,26 @@ testLettersCounter(engSentences, ENGLISH_VOWEL);
           break;
         case NUMBERS_ARRAY_SUFFIX:
           value = key.slice(0, key.length - NUMBERS_ARRAY_SUFFIX.length)
-                     .split(ARRAY_SEPARATOR)
+                     .split(SEPARATOR)
                      .map((val) => +val);
           break;
         case STRINGS_ARRAY_SUFFIX:
           value = key.slice(0, key.length - STRINGS_ARRAY_SUFFIX.length)
-                     .split(ARRAY_SEPARATOR);
+                     .split(SEPARATOR);
           break;
         case MIX_ARRAY_SUFFIX:
           value = key.slice(0, key.length - MIX_ARRAY_SUFFIX.length)
-                     .split(ARRAY_SEPARATOR)
+                     .split(SEPARATOR)
                      .map((val) => val.endsWith(NUMBER_SUFFIX) ? parseInt(val) : val.slice(0, val.length - STRING_SUFFIX.length));
+          break;
+        case OBJECT_SUFFIX:
+          value = key.slice(0, key.length - OBJECT_SUFFIX.length)
+                     .split(SEPARATOR)
+                     .reduce((acc, nextValue) => {
+                       const [key, value] = nextValue.split(OBJECT_SEPARATOR);
+                       acc[key] = value;
+                       return acc;
+                     }, {});
           break;
         default:
           break;
@@ -146,6 +173,7 @@ const testData = [
   ["apple", "Apple", "apple", "orange", "orange", "orange", "BaNaN", "BaNaN", "BanaN", "some text", "try", "try", "catcH"],
   ["__N", "__S", "_NA", "_SA", "_MA", "text__S", "8__N", "qwerty_MA", "wtf__S", "__N__N", "8 | 8", "/|", "___"],
   [1, 2, 2, 3, 4, "4", 3, "1"],
+  [{a : 1, b : 2}, {c : 4, a : 5}, {b : 2, a : 1}, {a : 8, c : 10}],
   [[8, 8, 8], [9, 9, 9], [8, 9, 10], [9, 9, 9], [7, 5, 3], [8, 9, 10]],
   [[8, "9", 10], ["8", 9, 10], ["8", "9", "10"], [7, 7, "5"], [7, 7, "5"], [7, "7", 5]],
   [10, "10", 11, "11", 11, [1, 3, 5, 7], "11", ["1", "3", "5", "7"], "hello", "d4c"]
@@ -158,4 +186,7 @@ for(const item of testData){
   console.log(uniqueValues(item));
   console.log("---------------------------------------------------------------------------");
 }
+
+const str = "1|2|3|4|5|";
+console.log(str.split("|"));
   
